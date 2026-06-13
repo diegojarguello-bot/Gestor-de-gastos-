@@ -14,25 +14,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #222536;
-  --surface3: #2a2e42;
-  --border: #2e3248;
-  --text: #e8eaf0;
-  --text-muted: #7b82a0;
-  --text-dim: #4a5068;
-  --green: #00c896;
-  --green-bg: #00c89618;
-  --green-border: #00c89640;
-  --red: #ff4d6d;
-  --red-bg: #ff4d6d18;
-  --red-border: #ff4d6d40;
-  --yellow: #f5a623;
-  --yellow-bg: #f5a62318;
-  --yellow-border: #f5a62340;
-  --blue: #4c9aff;
-  --blue-bg: #4c9aff15;
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #f4f6fb;
+  --surface3: #e8ecf5;
+  --border: #d4d9eb;
+  --text: #1a1d2e;
+  --text-muted: #5c6380;
+  --text-dim: #9ba3bf;
+  --green: #00a876;
+  --green-bg: #00a87615;
+  --green-border: #00a87640;
+  --red: #e0324f;
+  --red-bg: #e0324f12;
+  --red-border: #e0324f40;
+  --yellow: #d4880a;
+  --yellow-bg: #d4880a12;
+  --yellow-border: #d4880a40;
+  --blue: #3b7dd8;
+  --blue-bg: #3b7dd815;
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -53,7 +53,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 0%, #1a2040 0%, var(--bg) 70%);
+  background: radial-gradient(ellipse at 50% 0%, #dce6f8 0%, var(--bg) 70%);
 }
 
 .login-card {
@@ -406,10 +406,10 @@ td.td-detalle { min-width: 150px; }
 /* Menú contextual */
 .ctx-menu {
   position: fixed; z-index: 1000;
-  background: var(--surface2); border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 6px;
-  box-shadow: 0 8px 24px #00000060;
-  min-width: 180px;
+  box-shadow: 0 8px 28px #00000022;
+  min-width: 200px;
 }
 .ctx-menu button {
   display: block; width: 100%; text-align: left;
@@ -417,22 +417,22 @@ td.td-detalle { min-width: 150px; }
   color: var(--text); font-family: inherit; font-size: 13px;
   cursor: pointer; border-radius: 4px; transition: background .15s;
 }
-.ctx-menu button:hover { background: var(--surface3); }
+.ctx-menu button:hover { background: var(--surface2); }
 .ctx-partial-input {
   padding: 6px 8px;
   border-top: 1px solid var(--border); margin-top: 4px;
 }
 .ctx-partial-input input {
   width: 100%; padding: 8px 10px;
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--surface2); border: 1px solid var(--border);
   border-radius: var(--radius-sm); color: var(--text);
   font-family: inherit; font-size: 13px; outline: none;
   transition: border .2s; margin-bottom: 6px;
 }
 .ctx-partial-input input:focus { border-color: var(--yellow); }
-.ctx-partial-input button {
+.ctx-partial-confirm {
   width: 100%; padding: 8px;
-  background: var(--yellow); color: #1a1200;
+  background: var(--yellow); color: #fff;
   border: none; border-radius: var(--radius-sm);
   font-family: inherit; font-size: 13px; font-weight: 700;
   cursor: pointer; text-align: center;
@@ -495,6 +495,22 @@ td.td-detalle { min-width: 150px; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 #loading-overlay p { color: var(--text-muted); font-size: 13px; }
+
+/* Botones drag reorder */
+.drag-handle {
+  color: var(--text-dim); cursor: grab; font-size: 14px;
+  padding: 2px 4px; user-select: none; line-height: 1;
+  display: flex; flex-direction: column; gap: 1px; align-items: center;
+}
+.drag-handle:active { cursor: grabbing; }
+.move-btns { display: flex; flex-direction: column; gap: 2px; }
+.move-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim); font-size: 11px; padding: 0 3px;
+  line-height: 1; transition: color .15s;
+}
+.move-btn:hover { color: var(--text); }
+.move-btn:disabled { opacity: .25; cursor: default; }
 
 @media (max-width: 768px) {
   .metrics-grid { grid-template-columns: 1fr; }
@@ -595,6 +611,7 @@ td.td-detalle { min-width: 150px; }
       <table id="gastos-table">
         <thead>
           <tr>
+            <th style="width:28px"></th>
             <th style="width:32px"></th>
             <th class="td-entidad">Entidad</th>
             <th style="min-width:130px; text-align:right">Monto a Pagar</th>
@@ -620,7 +637,7 @@ td.td-detalle { min-width: 150px; }
       <div class="metric-card">
         <div class="metric-title">📊 Total Deudas</div>
         <div class="metric-big neutral" id="metric-total">$ 0</div>
-        <div style="font-size:11px; color:var(--text-dim); margin-top:6px;">Suma de todas las columnas B+C+D</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:6px;">Suma total de deudas del mes</div>
       </div>
       <div class="metric-card">
         <div class="metric-title">📋 Resumen de Deudas Actual</div>
@@ -667,14 +684,14 @@ td.td-detalle { min-width: 150px; }
 
 <!-- Menú contextual -->
 <div class="ctx-menu" id="ctx-menu" style="display:none">
-  <button onclick="ctxAction('paid')">✅ Marcar como Pagado</button>
-  <button onclick="ctxAction('partial-show')">🔸 Pago Parcial</button>
-  <button onclick="ctxAction('revert')">↩️ Revertir a Pendiente</button>
+  <button id="ctx-btn-paid"    onclick="event.stopPropagation();ctxAction('paid')">✅ Marcar como Pagado</button>
+  <button id="ctx-btn-partial" onclick="event.stopPropagation();ctxAction('partial-show')">🔸 Pago Parcial</button>
+  <button id="ctx-btn-revert"  onclick="event.stopPropagation();ctxAction('revert')">↩️ Revertir a Pendiente</button>
   <div class="ctx-partial-input" id="ctx-partial-wrap" style="display:none">
     <input type="text" id="ctx-partial-val" placeholder="Monto pagado..." inputmode="numeric"
            oninput="fmtInlineInput(this)"
-           onkeydown="if(event.key==='Enter'){event.preventDefault();ctxAction('partial-confirm');}"/>
-    <button onclick="ctxAction('partial-confirm')">Confirmar parcial</button>
+           onkeydown="if(event.key==='Enter'){event.stopPropagation();event.preventDefault();ctxAction('partial-confirm');}"/>
+    <button class="ctx-partial-confirm" onclick="event.stopPropagation();ctxAction('partial-confirm')">Confirmar parcial</button>
   </div>
 </div>
 
@@ -696,14 +713,16 @@ td.td-detalle { min-width: 150px; }
 <script>
 // ══════════════════════════════════════════════
 //  CONFIGURACIÓN FIREBASE
+//  ⚠️  Reemplazá estos valores con los de tu
+//  proyecto Firebase nuevo
 // ══════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyAeI5uRRpW1KjB5LLP6MwtzhWi_cmmvbSo",
-  authDomain: "gastos-e4029.firebaseapp.com",
-  projectId: "gastos-e4029",
-  storageBucket: "gastos-e4029.firebasestorage.app",
+  apiKey:            "AIzaSyAeI5uRRpW1KjB5LLP6MwtzhWi_cmmvbSo",
+  authDomain:        "gastos-e4029.firebaseapp.com",
+  projectId:         "gastos-e4029",
+  storageBucket:     "gastos-e4029.firebasestorage.app",
   messagingSenderId: "345839024109",
-  appId: "1:345839024109:web:69b10f80e5881d27d259e4"
+  appId:             "1:345839024109:web:69b10f80e5881d27d259e4"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -958,10 +977,18 @@ function renderRows() {
   const tbody = document.getElementById('gastos-body');
   tbody.innerHTML = '';
 
-  state.rows.forEach(row => {
+  state.rows.forEach((row, idx) => {
+    const isFirst = idx === 0;
+    const isLast  = idx === state.rows.length - 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>
+      <td style="width:28px">
+        <div class="move-btns">
+          <button class="move-btn" title="Subir" onclick="moveRow('${row.id}',-1)" ${isFirst?'disabled':''}>▲</button>
+          <button class="move-btn" title="Bajar" onclick="moveRow('${row.id}',1)"  ${isLast ?'disabled':''}>▼</button>
+        </div>
+      </td>
+      <td style="width:32px">
         <button class="pin-btn ${row.pinned?'pinned':''}" title="${row.pinned?'Fijada (click para soltar)':'Fijar fila'}"
                 onclick="togglePin('${row.id}')">
           ${row.pinned ? '📌' : '📍'}
@@ -988,6 +1015,17 @@ function renderRows() {
   });
 
   recalc();
+}
+
+function moveRow(id, dir) {
+  const idx = state.rows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= state.rows.length) return;
+  const rows = [...state.rows];
+  [rows[idx], rows[newIdx]] = [rows[newIdx], rows[idx]];
+  state.rows = rows;
+  renderRows(); scheduleSave();
 }
 
 function renderAmountCell(row, col) {
@@ -1027,25 +1065,52 @@ function commitInlineB(rowId, val) {
 }
 
 // ══════════════════════════════════════════════
-//  MENÚ CONTEXTUAL (B y D)
+//  MENÚ CONTEXTUAL
 // ══════════════════════════════════════════════
 function openCtxMenu(e, rowId, col) {
   e.stopPropagation();
   ctxTargetRow = { rowId, col };
 
-  // Solo columna B y D permiten acciones
-  // En C mostramos solo revertir
-  const menu = document.getElementById('ctx-menu');
+  const menu        = document.getElementById('ctx-menu');
   const partialWrap = document.getElementById('ctx-partial-wrap');
+  const btnPaid     = document.getElementById('ctx-btn-paid');
+  const btnPartial  = document.getElementById('ctx-btn-partial');
+  const btnRevert   = document.getElementById('ctx-btn-revert');
+
+  // Reset estado interno
   partialWrap.style.display = 'none';
   document.getElementById('ctx-partial-val').value = '';
 
-  // Posicionar
+  // Col B: puede pagar total, parcial — NO revertir (no hay nada que revertir aún)
+  // Col C o D: solo revertir a pendiente
+  if (col === 'b') {
+    btnPaid.style.display    = 'block';
+    btnPartial.style.display = 'block';
+    btnRevert.style.display  = 'none';
+  } else {
+    btnPaid.style.display    = 'none';
+    btnPartial.style.display = 'none';
+    btnRevert.style.display  = 'block';
+  }
+
+  // Posicionar junto al elemento clickeado (no en la posición del mouse)
+  const target = e.currentTarget;
+  const rect   = target.getBoundingClientRect();
   menu.style.display = 'block';
-  let x = e.pageX, y = e.pageY;
-  if (x + 200 > window.innerWidth) x = window.innerWidth - 210;
-  menu.style.left = x + 'px';
-  menu.style.top  = y + 'px';
+
+  let left = rect.right + 6;
+  let top  = rect.top;
+
+  // Ajustar si se sale por la derecha
+  const menuW = menu.offsetWidth || 210;
+  if (left + menuW > window.innerWidth) left = rect.left - menuW - 6;
+
+  // Ajustar si se sale por abajo
+  const menuH = menu.offsetHeight || 120;
+  if (top + menuH > window.innerHeight) top = window.innerHeight - menuH - 10;
+
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
 }
 
 document.addEventListener('click', () => {

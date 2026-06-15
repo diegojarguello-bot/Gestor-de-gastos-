@@ -518,6 +518,117 @@ td.td-detalle { min-width: 150px; }
   .tab-content { padding: 14px; }
   .header-title { display: none; }
 }
+
+/* ── MONTOS AJENOS ── */
+.btn-nueva-persona {
+  background: var(--green); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  padding: 9px 18px; font-family: inherit;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: opacity .2s; display: flex; align-items: center; gap: 6px;
+}
+.btn-nueva-persona:hover { opacity: .88; }
+
+.persona-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 20px; overflow: hidden;
+}
+.persona-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.persona-header-left { display: flex; align-items: center; gap: 12px; }
+.persona-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), #2563b8);
+  color: #fff; display: flex; align-items: center;
+  justify-content: center; font-size: 15px; font-weight: 700;
+}
+.persona-name {
+  font-size: 15px; font-weight: 700;
+}
+.persona-total-badge {
+  font-size: 12px; font-weight: 600; padding: 3px 12px;
+  border-radius: 20px; background: var(--blue-bg);
+  color: var(--blue); border: 1px solid #3b7dd840;
+}
+.persona-header-right { display: flex; align-items: center; gap: 10px; }
+.btn-delete-persona {
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: var(--radius-sm);
+  padding: 5px 10px; font-family: inherit; font-size: 12px;
+  cursor: pointer; transition: all .2s;
+}
+.btn-delete-persona:hover { border-color: var(--red); color: var(--red); }
+
+.persona-body { padding: 16px 20px; }
+
+/* Tabla de cuotas */
+.cuotas-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cuotas-table th {
+  text-align: left; padding: 8px 12px;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  letter-spacing: .06em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.cuotas-table th.right { text-align: right; }
+.cuotas-table td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.cuotas-table tr:last-child td { border-bottom: none; }
+.cuotas-table tr:hover td { background: #00000004; }
+
+.cuota-input {
+  background: transparent; border: none; outline: none;
+  font-family: inherit; font-size: 13px; color: var(--text);
+  width: 100%;
+}
+.cuota-input.right { text-align: right; font-weight: 600; }
+.cuota-input::placeholder { color: var(--text-dim); }
+
+.cuota-num-input {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 4px 8px; outline: none;
+  font-family: inherit; font-size: 13px; color: var(--text);
+  width: 70px; text-align: center;
+}
+.cuota-num-input:focus { border-color: var(--blue); }
+
+.cuotas-restantes-badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 20px; font-size: 12px; font-weight: 700;
+  background: var(--yellow-bg); color: var(--yellow);
+  border: 1px solid var(--yellow-border);
+}
+.cuotas-restantes-badge.done {
+  background: var(--green-bg); color: var(--green);
+  border-color: var(--green-border);
+}
+
+.ultima-cuota-badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: var(--surface2); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-add-cuota {
+  background: transparent; border: 1px dashed var(--border);
+  color: var(--text-muted); border-radius: var(--radius-sm);
+  padding: 7px 14px; font-family: inherit; font-size: 12px;
+  cursor: pointer; transition: all .2s;
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 12px;
+}
+.btn-add-cuota:hover { border-color: var(--blue); color: var(--blue); }
+
+.btn-del-cuota {
+  background: none; border: none; color: var(--text-dim);
+  cursor: pointer; font-size: 14px; transition: color .15s;
+}
+.btn-del-cuota:hover { color: var(--red); }
 </style>
 </head>
 <body>
@@ -582,6 +693,7 @@ td.td-detalle { min-width: 150px; }
     <nav>
       <button class="nav-tab active" onclick="showTab('mes')">Mes Corriente</button>
       <button class="nav-tab" onclick="showTab('historico')">Histórico</button>
+      <button class="nav-tab" onclick="showTab('ajenos')">Montos Ajenos</button>
     </nav>
     <div class="header-right">
       <div class="user-chip">
@@ -680,6 +792,20 @@ td.td-detalle { min-width: 150px; }
       </div>
     </div>
   </div>
+
+  <!-- TAB 3: Montos Ajenos -->
+  <div class="tab-content" id="tab-ajenos">
+    <div class="page-header">
+      <h2>Montos Ajenos</h2>
+      <button class="btn-nueva-persona" onclick="ajenosNuevaPersona()">＋ Nueva persona</button>
+    </div>
+    <div id="ajenos-container">
+      <div class="historico-empty">
+        <div class="icon">🤝</div>
+        <div>Aún no hay registros.<br>Agregá una persona para empezar a trackear lo que te deben.</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Menú contextual -->
@@ -703,6 +829,23 @@ td.td-detalle { min-width: 150px; }
     <div class="modal-actions">
       <button class="btn-ghost" onclick="document.getElementById('close-modal').style.display='none'">Cancelar</button>
       <button class="btn-confirm" onclick="closeMonth()">Archivar y Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nueva persona -->
+<div class="modal-bg" id="persona-modal" style="display:none">
+  <div class="modal">
+    <h3>🤝 Nueva persona</h3>
+    <p>Ingresá el nombre de la persona que te debe.</p>
+    <div class="form-group">
+      <label>NOMBRE</label>
+      <input type="text" id="persona-nombre-input" placeholder="Ej: Juan, María..."
+             onkeydown="if(event.key==='Enter') ajenosConfirmarPersona()"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="document.getElementById('persona-modal').style.display='none'">Cancelar</button>
+      <button class="btn-confirm" onclick="ajenosConfirmarPersona()">Crear</button>
     </div>
   </div>
 </div>
@@ -838,6 +981,7 @@ async function loadData() {
   } catch(e) {
     console.error('Error cargando datos:', e);
   }
+  await loadAjenos();
 }
 
 function scheduleSave() {
@@ -1324,8 +1468,11 @@ function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelectorAll('.nav-tab')[tab === 'mes' ? 0 : 1].classList.add('active');
+  const tabOrder = ['mes','historico','ajenos'];
+  const idx = tabOrder.indexOf(tab);
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
   if (tab === 'historico') renderHistorico();
+  if (tab === 'ajenos')    renderAjenos();
 }
 
 function renderAll() {
@@ -1348,6 +1495,239 @@ function escHtml(str) {
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+//  MONTOS AJENOS — ESTADO Y FIRESTORE
+// ══════════════════════════════════════════════
+let ajenosData = []; // [ { id, nombre, items: [ { id, item, monto, fechaCompra, cantCuotas, cuotasRestantes, ultimaCuota } ] } ]
+
+async function loadAjenos() {
+  try {
+    const doc = await db.collection('usuarios').doc(currentUserId).collection('data').doc('ajenos').get();
+    if (doc.exists) {
+      ajenosData = doc.data().personas || [];
+    } else {
+      ajenosData = [];
+    }
+  } catch(e) { console.error('Error cargando ajenos:', e); }
+}
+
+async function saveAjenos() {
+  if (!currentUserId) return;
+  try {
+    await db.collection('usuarios').doc(currentUserId).collection('data').doc('ajenos').set({ personas: ajenosData });
+    const ind = document.getElementById('save-indicator');
+    if (ind) ind.style.display = 'none';
+  } catch(e) { console.error('Error guardando ajenos:', e); }
+}
+
+let ajenosSaveTimer = null;
+function scheduleAjenosSave() {
+  clearTimeout(ajenosSaveTimer);
+  const ind = document.getElementById('save-indicator');
+  if (ind) ind.style.display = 'inline';
+  ajenosSaveTimer = setTimeout(saveAjenos, 800);
+}
+
+// ══════════════════════════════════════════════
+//  MONTOS AJENOS — LÓGICA DE CUOTAS
+// ══════════════════════════════════════════════
+function calcCuotasRestantes(fechaCompraStr, cantCuotas) {
+  if (!fechaCompraStr || !cantCuotas) return null;
+  // Parsear fecha flexible: dd/mm/yyyy, d/m/yyyy, dd-mm-yyyy, d-m-yy
+  const parts = fechaCompraStr.split(/[\/\-]/);
+  if (parts.length < 3) return null;
+  let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+  if (y < 100) y += 2000;
+  const fechaCompra = new Date(y, m, d);
+  if (isNaN(fechaCompra.getTime())) return null;
+
+  const hoy = new Date();
+  // Meses transcurridos desde la compra
+  const mesesTranscurridos = (hoy.getFullYear() - fechaCompra.getFullYear()) * 12
+    + (hoy.getMonth() - fechaCompra.getMonth());
+  // Cuotas ya pagadas = meses transcurridos + 1 (la del mes de compra)
+  const cuotasPagadas = Math.max(0, mesesTranscurridos + 1);
+  const restantes = Math.max(0, cantCuotas - cuotasPagadas);
+  return restantes;
+}
+
+function calcUltimaCuota(fechaCompraStr, cantCuotas) {
+  if (!fechaCompraStr || !cantCuotas) return null;
+  const parts = fechaCompraStr.split(/[\/\-]/);
+  if (parts.length < 3) return null;
+  let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+  if (y < 100) y += 2000;
+  const fechaCompra = new Date(y, m, 1);
+  if (isNaN(fechaCompra.getTime())) return null;
+  // Última cuota = mes compra + (cantCuotas - 1)
+  const ultimaMes = new Date(fechaCompra.getFullYear(), fechaCompra.getMonth() + cantCuotas - 1, 1);
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const yy = String(ultimaMes.getFullYear()).slice(2);
+  return `${meses[ultimaMes.getMonth()]}-${yy}`;
+}
+
+function totalPersona(persona) {
+  return persona.items.reduce((s, it) => s + parseARS(it.monto), 0);
+}
+
+// ══════════════════════════════════════════════
+//  MONTOS AJENOS — RENDER
+// ══════════════════════════════════════════════
+function renderAjenos() {
+  const container = document.getElementById('ajenos-container');
+  if (!ajenosData.length) {
+    container.innerHTML = `
+      <div class="historico-empty">
+        <div class="icon">🤝</div>
+        <div>Aún no hay registros.<br>Agregá una persona para empezar a trackear lo que te deben.</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  ajenosData.forEach(persona => {
+    const total = totalPersona(persona);
+    const card  = document.createElement('div');
+    card.className = 'persona-card';
+    card.id = `persona-card-${persona.id}`;
+
+    card.innerHTML = `
+      <div class="persona-header">
+        <div class="persona-header-left">
+          <div class="persona-avatar">${persona.nombre[0].toUpperCase()}</div>
+          <div>
+            <div class="persona-name">${escHtml(persona.nombre)}</div>
+          </div>
+          <span class="persona-total-badge">Total: ${fmtARS(total)}</span>
+        </div>
+        <div class="persona-header-right">
+          <button class="btn-delete-persona" onclick="ajenosDeletePersona('${persona.id}')">🗑 Eliminar</button>
+        </div>
+      </div>
+      <div class="persona-body">
+        ${buildCuotasTable(persona)}
+        <button class="btn-add-cuota" onclick="ajenosAddItem('${persona.id}')">＋ Agregar item</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function buildCuotasTable(persona) {
+  if (!persona.items.length) {
+    return `<p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Sin items aún. Agregá uno abajo.</p>`;
+  }
+
+  let rows = '';
+  persona.items.forEach((it, idx) => {
+    const restantes  = calcCuotasRestantes(it.fechaCompra, parseInt(it.cantCuotas));
+    const ultimaCuota = calcUltimaCuota(it.fechaCompra, parseInt(it.cantCuotas));
+
+    const restantesBadge = restantes === null ? '—'
+      : restantes === 0
+        ? `<span class="cuotas-restantes-badge done">✅ Saldado</span>`
+        : `<span class="cuotas-restantes-badge">${restantes} cuota${restantes !== 1 ? 's' : ''}</span>`;
+
+    const ultimaBadge = ultimaCuota
+      ? `<span class="ultima-cuota-badge">${ultimaCuota}</span>`
+      : '—';
+
+    rows += `
+      <tr>
+        <td><input class="cuota-input" value="${escHtml(it.item)}" placeholder="Descripción"
+              onchange="ajenosUpdateItem('${persona.id}','${it.id}','item',this.value)"/></td>
+        <td style="text-align:right">
+          <input class="cuota-input right" value="${it.monto ? '$ '+parseARS(it.monto).toLocaleString('es-AR') : ''}"
+              placeholder="$ 0" oninput="fmtInlineInput(this)"
+              onchange="ajenosUpdateItem('${persona.id}','${it.id}','monto',this.value)"/>
+        </td>
+        <td><input class="cuota-input" value="${escHtml(it.fechaCompra)}" placeholder="dd/mm/aaaa"
+              onchange="ajenosUpdateItem('${persona.id}','${it.id}','fechaCompra',this.value)"/></td>
+        <td style="text-align:center">
+          <input class="cuota-num-input" type="number" min="1" value="${it.cantCuotas||''}" placeholder="—"
+              onchange="ajenosUpdateItem('${persona.id}','${it.id}','cantCuotas',this.value)"/>
+        </td>
+        <td style="text-align:center">${restantesBadge}</td>
+        <td style="text-align:center">${ultimaBadge}</td>
+        <td style="text-align:center">
+          <button class="btn-del-cuota" onclick="ajenosDeleteItem('${persona.id}','${it.id}')" title="Eliminar">✕</button>
+        </td>
+      </tr>`;
+  });
+
+  return `
+    <table class="cuotas-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th class="right">Monto cuota</th>
+          <th>Fecha compra</th>
+          <th style="text-align:center">Cant. cuotas</th>
+          <th style="text-align:center">Cuotas restantes</th>
+          <th style="text-align:center">Última cuota</th>
+          <th style="width:30px"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ══════════════════════════════════════════════
+//  MONTOS AJENOS — ACCIONES
+// ══════════════════════════════════════════════
+function ajenosNuevaPersona() {
+  document.getElementById('persona-nombre-input').value = '';
+  document.getElementById('persona-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('persona-nombre-input').focus(), 100);
+}
+
+function ajenosConfirmarPersona() {
+  const nombre = document.getElementById('persona-nombre-input').value.trim();
+  if (!nombre) { showToast('Ingresá un nombre.'); return; }
+  document.getElementById('persona-modal').style.display = 'none';
+  ajenosData.push({ id: uid(), nombre, items: [] });
+  scheduleAjenosSave();
+  renderAjenos();
+  showToast(`✅ "${nombre}" agregado.`);
+}
+
+function ajenosDeletePersona(personaId) {
+  if (!confirm('¿Eliminar esta persona y todos sus registros?')) return;
+  ajenosData = ajenosData.filter(p => p.id !== personaId);
+  scheduleAjenosSave();
+  renderAjenos();
+}
+
+function ajenosAddItem(personaId) {
+  const persona = ajenosData.find(p => p.id === personaId);
+  if (!persona) return;
+  persona.items.push({ id: uid(), item: '', monto: '', fechaCompra: '', cantCuotas: '', ultimaCuota: '' });
+  scheduleAjenosSave();
+  renderAjenos();
+}
+
+function ajenosDeleteItem(personaId, itemId) {
+  const persona = ajenosData.find(p => p.id === personaId);
+  if (!persona) return;
+  persona.items = persona.items.filter(it => it.id !== itemId);
+  scheduleAjenosSave();
+  renderAjenos();
+}
+
+function ajenosUpdateItem(personaId, itemId, field, val) {
+  const persona = ajenosData.find(p => p.id === personaId);
+  if (!persona) return;
+  const item = persona.items.find(it => it.id === itemId);
+  if (!item) return;
+  if (field === 'monto') {
+    item.monto = val.replace(/\$/g,'').replace(/\s/g,'').replace(/\./g,'');
+  } else {
+    item[field] = val;
+  }
+  scheduleAjenosSave();
+  renderAjenos();
 }
 
 // Formateo en inputs de ingreso al tipear

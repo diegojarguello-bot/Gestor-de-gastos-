@@ -9,6 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- SheetJS para exportar Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -629,6 +631,73 @@ td.td-detalle { min-width: 150px; }
   cursor: pointer; font-size: 14px; transition: color .15s;
 }
 .btn-del-cuota:hover { color: var(--red); }
+
+/* Botón fecha calendario */
+.btn-fecha-cal {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 10px;
+  font-family: inherit; font-size: 12px; color: var(--text-muted);
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.btn-fecha-cal:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Botón exportar */
+.btn-export {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 7px 14px;
+  border-radius: var(--radius-sm); font-family: inherit;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .2s; display: flex; align-items: center; gap: 5px;
+}
+.btn-export:hover { border-color: var(--green); color: var(--green); }
+
+/* Calendario emergente */
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cal-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.cal-nav {
+  background: none; border: 1px solid var(--border);
+  border-radius: 4px; width: 26px; height: 26px;
+  cursor: pointer; font-size: 14px; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.cal-nav:hover { border-color: var(--blue); color: var(--blue); }
+.cal-grid-header {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  margin-bottom: 4px;
+}
+.cal-grid-header span {
+  text-align: center; font-size: 10px; font-weight: 600;
+  color: var(--text-dim); padding: 2px 0;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 2px;
+}
+.cal-day, .cal-empty {
+  text-align: center; padding: 5px 2px; font-size: 12px;
+  border-radius: 4px; cursor: pointer; color: var(--text);
+  transition: background .12s;
+}
+.cal-empty { cursor: default; }
+.cal-day:hover { background: var(--surface2); }
+.cal-today { color: var(--blue); font-weight: 700; }
+.cal-selected {
+  background: var(--blue) !important; color: #fff !important;
+  font-weight: 700; border-radius: 4px;
+}
+.cal-footer {
+  margin-top: 8px; border-top: 1px solid var(--border);
+  padding-top: 8px; text-align: right;
+}
+.cal-clear {
+  background: none; border: none; font-family: inherit;
+  font-size: 11px; color: var(--text-dim); cursor: pointer;
+  transition: color .15s;
+}
+.cal-clear:hover { color: var(--red); }
 </style>
 </head>
 <body>
@@ -709,7 +778,10 @@ td.td-detalle { min-width: 150px; }
   <div class="tab-content active" id="tab-mes">
     <div class="page-header">
       <h2>Mes Corriente</h2>
-      <div class="month-badge" id="current-month-badge">—</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="month-badge" id="current-month-badge">—</div>
+        <button class="btn-export" onclick="exportarMesExcel()">⬇ Excel</button>
+      </div>
     </div>
 
     <!-- Ingresos -->
@@ -797,7 +869,10 @@ td.td-detalle { min-width: 150px; }
   <div class="tab-content" id="tab-ajenos">
     <div class="page-header">
       <h2>Montos Ajenos</h2>
-      <button class="btn-nueva-persona" onclick="ajenosNuevaPersona()">＋ Nueva persona</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn-export" onclick="exportarAjenosExcel()">⬇ Excel</button>
+        <button class="btn-nueva-persona" onclick="ajenosNuevaPersona()">＋ Nueva persona</button>
+      </div>
     </div>
     <div id="ajenos-container">
       <div class="historico-empty">
@@ -852,6 +927,9 @@ td.td-detalle { min-width: 150px; }
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- Calendario emergente -->
+<div id="mini-calendar" style="display:none;position:fixed;z-index:2000;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 8px 28px #00000022;width:260px"></div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -1532,37 +1610,51 @@ function scheduleAjenosSave() {
 
 // ══════════════════════════════════════════════
 //  MONTOS AJENOS — LÓGICA DE CUOTAS
+//  Regla: primer cuota = mes SIGUIENTE a la compra
 // ══════════════════════════════════════════════
+function parseFechaCompra(str) {
+  if (!str) return null;
+  // Soporta: dd/mm/yyyy, d/m/yyyy, dd-mm-yyyy, yyyy-mm-dd
+  let parts;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    // formato ISO desde input[type=date]
+    parts = str.split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  }
+  parts = str.split(/[\/\-]/);
+  if (parts.length < 3) return null;
+  let d = parseInt(parts[0]), m = parseInt(parts[1])-1, y = parseInt(parts[2]);
+  if (y < 100) y += 2000;
+  const fecha = new Date(y, m, d);
+  return isNaN(fecha.getTime()) ? null : fecha;
+}
+
 function calcCuotasRestantes(fechaCompraStr, cantCuotas) {
   if (!fechaCompraStr || !cantCuotas) return null;
-  // Parsear fecha flexible: dd/mm/yyyy, d/m/yyyy, dd-mm-yyyy, d-m-yy
-  const parts = fechaCompraStr.split(/[\/\-]/);
-  if (parts.length < 3) return null;
-  let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
-  if (y < 100) y += 2000;
-  const fechaCompra = new Date(y, m, d);
-  if (isNaN(fechaCompra.getTime())) return null;
+  const fechaCompra = parseFechaCompra(fechaCompraStr);
+  if (!fechaCompra) return null;
 
+  // Primera cuota = mes SIGUIENTE a la compra
+  const primerCuota = new Date(fechaCompra.getFullYear(), fechaCompra.getMonth() + 1, 1);
   const hoy = new Date();
-  // Meses transcurridos desde la compra
-  const mesesTranscurridos = (hoy.getFullYear() - fechaCompra.getFullYear()) * 12
-    + (hoy.getMonth() - fechaCompra.getMonth());
-  // Cuotas ya pagadas = meses transcurridos + 1 (la del mes de compra)
-  const cuotasPagadas = Math.max(0, mesesTranscurridos + 1);
-  const restantes = Math.max(0, cantCuotas - cuotasPagadas);
+  const mesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+  // Cuotas vencidas = meses desde primerCuota hasta mesActual (inclusive)
+  const mesesVencidos = Math.max(0,
+    (mesActual.getFullYear() - primerCuota.getFullYear()) * 12
+    + (mesActual.getMonth() - primerCuota.getMonth()) + 1
+  );
+
+  const restantes = Math.max(0, cantCuotas - mesesVencidos);
   return restantes;
 }
 
 function calcUltimaCuota(fechaCompraStr, cantCuotas) {
   if (!fechaCompraStr || !cantCuotas) return null;
-  const parts = fechaCompraStr.split(/[\/\-]/);
-  if (parts.length < 3) return null;
-  let d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
-  if (y < 100) y += 2000;
-  const fechaCompra = new Date(y, m, 1);
-  if (isNaN(fechaCompra.getTime())) return null;
-  // Última cuota = mes compra + (cantCuotas - 1)
-  const ultimaMes = new Date(fechaCompra.getFullYear(), fechaCompra.getMonth() + cantCuotas - 1, 1);
+  const fechaCompra = parseFechaCompra(fechaCompraStr);
+  if (!fechaCompra) return null;
+  // Última cuota = mes de compra + cantCuotas (porque primer cuota es mes siguiente)
+  const ultimaMes = new Date(fechaCompra.getFullYear(), fechaCompra.getMonth() + cantCuotas, 1);
   const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const yy = String(ultimaMes.getFullYear()).slice(2);
   return `${meses[ultimaMes.getMonth()]}-${yy}`;
@@ -1571,6 +1663,107 @@ function calcUltimaCuota(fechaCompraStr, cantCuotas) {
 function totalPersona(persona) {
   return persona.items.reduce((s, it) => s + parseARS(it.monto), 0);
 }
+
+// ══════════════════════════════════════════════
+//  CALENDARIO EMERGENTE
+// ══════════════════════════════════════════════
+let calTarget = null; // { personaId, itemId }
+let calYear   = new Date().getFullYear();
+let calMonth  = new Date().getMonth();
+
+function openCalendar(e, personaId, itemId, currentVal) {
+  e.stopPropagation();
+  calTarget = { personaId, itemId };
+
+  // Si hay fecha guardada, abrir en ese mes
+  if (currentVal) {
+    const f = parseFechaCompra(currentVal);
+    if (f) { calYear = f.getFullYear(); calMonth = f.getMonth(); }
+  } else {
+    calYear = new Date().getFullYear(); calMonth = new Date().getMonth();
+  }
+
+  renderCalendar(currentVal);
+
+  const cal = document.getElementById('mini-calendar');
+  cal.style.display = 'block';
+
+  // Posicionar junto al botón
+  const btn  = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  let left = rect.left, top = rect.bottom + 6;
+  const calW = 260, calH = 260;
+  if (left + calW > window.innerWidth)  left = window.innerWidth - calW - 8;
+  if (top  + calH > window.innerHeight) top  = rect.top - calH - 6;
+  cal.style.left = left + 'px';
+  cal.style.top  = top  + 'px';
+}
+
+function renderCalendar(selectedStr) {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const diasSem = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+
+  const selected = selectedStr ? parseFechaCompra(selectedStr) : null;
+
+  const primerDia = new Date(calYear, calMonth, 1).getDay();
+  const diasEnMes = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let celdas = '';
+  // Días vacíos al inicio
+  for (let i = 0; i < primerDia; i++) celdas += `<span class="cal-empty"></span>`;
+  for (let d = 1; d <= diasEnMes; d++) {
+    const isSelected = selected
+      && selected.getDate() === d
+      && selected.getMonth() === calMonth
+      && selected.getFullYear() === calYear;
+    const hoy = new Date();
+    const isHoy = hoy.getDate() === d && hoy.getMonth() === calMonth && hoy.getFullYear() === calYear;
+    celdas += `<span class="cal-day${isSelected?' cal-selected':''}${isHoy&&!isSelected?' cal-today':''}"
+      onclick="calSelectDay(${d})">${d}</span>`;
+  }
+
+  document.getElementById('mini-calendar').innerHTML = `
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calNav(-1)">‹</button>
+      <span class="cal-title">${meses[calMonth]} ${calYear}</span>
+      <button class="cal-nav" onclick="calNav(1)">›</button>
+    </div>
+    <div class="cal-grid-header">${diasSem.map(d=>`<span>${d}</span>`).join('')}</div>
+    <div class="cal-grid">${celdas}</div>
+    <div class="cal-footer">
+      <button class="cal-clear" onclick="calClear()">Limpiar</button>
+    </div>`;
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  // Obtener valor actual seleccionado
+  const persona = ajenosData.find(p => p.id === calTarget.personaId);
+  const item    = persona?.items.find(it => it.id === calTarget.itemId);
+  renderCalendar(item?.fechaCompra || '');
+}
+
+function calSelectDay(d) {
+  const dd = String(d).padStart(2,'0');
+  const mm = String(calMonth + 1).padStart(2,'0');
+  const yyyy = calYear;
+  const fechaStr = `${dd}/${mm}/${yyyy}`;
+  ajenosUpdateItem(calTarget.personaId, calTarget.itemId, 'fechaCompra', fechaStr);
+  document.getElementById('mini-calendar').style.display = 'none';
+}
+
+function calClear() {
+  ajenosUpdateItem(calTarget.personaId, calTarget.itemId, 'fechaCompra', '');
+  document.getElementById('mini-calendar').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  const cal = document.getElementById('mini-calendar');
+  if (cal && !cal.contains(e.target)) cal.style.display = 'none';
+});
 
 // ══════════════════════════════════════════════
 //  MONTOS AJENOS — RENDER
@@ -1621,8 +1814,8 @@ function buildCuotasTable(persona) {
   }
 
   let rows = '';
-  persona.items.forEach((it, idx) => {
-    const restantes  = calcCuotasRestantes(it.fechaCompra, parseInt(it.cantCuotas));
+  persona.items.forEach((it) => {
+    const restantes   = calcCuotasRestantes(it.fechaCompra, parseInt(it.cantCuotas));
     const ultimaCuota = calcUltimaCuota(it.fechaCompra, parseInt(it.cantCuotas));
 
     const restantesBadge = restantes === null ? '—'
@@ -1634,6 +1827,8 @@ function buildCuotasTable(persona) {
       ? `<span class="ultima-cuota-badge">${ultimaCuota}</span>`
       : '—';
 
+    const fechaLabel = it.fechaCompra || 'Elegir fecha';
+
     rows += `
       <tr>
         <td><input class="cuota-input" value="${escHtml(it.item)}" placeholder="Descripción"
@@ -1643,8 +1838,11 @@ function buildCuotasTable(persona) {
               placeholder="$ 0" oninput="fmtInlineInput(this)"
               onchange="ajenosUpdateItem('${persona.id}','${it.id}','monto',this.value)"/>
         </td>
-        <td><input class="cuota-input" value="${escHtml(it.fechaCompra)}" placeholder="dd/mm/aaaa"
-              onchange="ajenosUpdateItem('${persona.id}','${it.id}','fechaCompra',this.value)"/></td>
+        <td>
+          <button class="btn-fecha-cal" onclick="openCalendar(event,'${persona.id}','${it.id}','${it.fechaCompra||''}')">
+            📅 ${escHtml(fechaLabel)}
+          </button>
+        </td>
         <td style="text-align:center">
           <input class="cuota-num-input" type="number" min="1" value="${it.cantCuotas||''}" placeholder="—"
               onchange="ajenosUpdateItem('${persona.id}','${it.id}','cantCuotas',this.value)"/>
@@ -1728,6 +1926,87 @@ function ajenosUpdateItem(personaId, itemId, field, val) {
   }
   scheduleAjenosSave();
   renderAjenos();
+}
+
+// ══════════════════════════════════════════════
+//  EXPORTAR EXCEL
+// ══════════════════════════════════════════════
+function exportarMesExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Hoja de Ingresos
+  const ingData = [['Concepto','Monto']];
+  state.ingresos.forEach(i => ingData.push([i.name, parseARS(i.amount)]));
+  const totalIng = state.ingresos.reduce((s,i) => s + parseARS(i.amount), 0);
+  ingData.push(['TOTAL INGRESOS', totalIng]);
+  const wsIng = XLSX.utils.aoa_to_sheet(ingData);
+  XLSX.utils.book_append_sheet(wb, wsIng, 'Ingresos');
+
+  // Hoja de Gastos
+  const now = new Date();
+  const mesLabel = now.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const gasData = [
+    [`Mes: ${mesLabel}`],
+    [],
+    ['Entidad','Monto a Pagar','Ya Pagado','Pago Aplazado','Detalle']
+  ];
+  let totalB=0, totalC=0, totalD=0;
+  state.rows.forEach(r => {
+    const b = parseARS(r.b), c = parseARS(r.c), d = parseARS(r.d);
+    totalB+=b; totalC+=c; totalD+=d;
+    gasData.push([r.entity||'', b||'', c||'', d||'', r.detalle||'']);
+  });
+  gasData.push([]);
+  gasData.push(['TOTAL DEUDAS', totalB+totalC+totalD]);
+  gasData.push(['Falta pagar', totalB]);
+  gasData.push(['Ya pagado',   totalC]);
+  gasData.push(['Aplazado',    totalD]);
+  gasData.push(['Resto sobre sueldo', totalIng - (totalB+totalC+totalD)]);
+
+  const wsGas = XLSX.utils.aoa_to_sheet(gasData);
+  XLSX.utils.book_append_sheet(wb, wsGas, 'Gastos del Mes');
+
+  const fileName = `Gastos_${mesLabel.replace(' ','_')}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+  showToast('✅ Excel descargado.');
+}
+
+function exportarAjenosExcel() {
+  if (!ajenosData.length) { showToast('No hay datos para exportar.'); return; }
+  const wb = XLSX.utils.book_new();
+
+  ajenosData.forEach(persona => {
+    const data = [
+      [`Persona: ${persona.nombre}`],
+      [],
+      ['Item','Monto cuota','Fecha compra','Cant. cuotas','Cuotas restantes','Última cuota']
+    ];
+    let total = 0;
+    persona.items.forEach(it => {
+      const monto = parseARS(it.monto);
+      total += monto;
+      const restantes  = calcCuotasRestantes(it.fechaCompra, parseInt(it.cantCuotas));
+      const ultimaCuota = calcUltimaCuota(it.fechaCompra, parseInt(it.cantCuotas));
+      data.push([
+        it.item||'',
+        monto||'',
+        it.fechaCompra||'',
+        it.cantCuotas||'',
+        restantes !== null ? restantes : '',
+        ultimaCuota||''
+      ]);
+    });
+    data.push([]);
+    data.push(['TOTAL', total]);
+
+    // Nombre de hoja limitado a 31 chars (límite Excel)
+    const sheetName = persona.nombre.slice(0,31).replace(/[:\\\/\?\*\[\]]/g,'');
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  XLSX.writeFile(wb, 'Montos_Ajenos.xlsx');
+  showToast('✅ Excel descargado.');
 }
 
 // Formateo en inputs de ingreso al tipear
